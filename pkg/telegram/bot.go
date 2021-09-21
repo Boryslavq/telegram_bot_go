@@ -1,17 +1,18 @@
 package telegram
 
 import (
-	"log"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"log"
+	"tgbot/pkg/config"
 )
 
 type Bot struct {
-	bot *tgbotapi.BotAPI
+	bot     *tgbotapi.BotAPI
+	message config.Message
 }
 
-func NewBot(bot *tgbotapi.BotAPI) *Bot {
-	return &Bot{bot: bot}
+func NewBot(bot *tgbotapi.BotAPI, message config.Message) *Bot {
+	return &Bot{bot: bot, message: message}
 }
 
 func (b *Bot) Start() error {
@@ -29,12 +30,10 @@ func (b *Bot) HandleUpdates(updates tgbotapi.UpdatesChannel) {
 	notification := tgbotapi.NewMessage(595259247, "Бот запущен")
 	b.bot.Send(notification)
 	for update := range updates {
+		b.HandleMessage(update.Message)
+
 		if update.CallbackQuery != nil {
 			b.HandleCallbackDataMenu(update.CallbackQuery)
-		}
-		if update.CallbackQuery != nil && update.CallbackQuery.Data == "Yes" {
-			b.SendMessageToAdmin(update.Message)
-			continue
 		}
 		if update.Message == nil {
 			continue
@@ -46,7 +45,6 @@ func (b *Bot) HandleUpdates(updates tgbotapi.UpdatesChannel) {
 			}
 			continue
 		}
-		b.HandleMessage(update.Message)
 
 	}
 }

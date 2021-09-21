@@ -1,23 +1,13 @@
 package telegram
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"io/ioutil"
 	"reflect"
 )
 
 const (
 	commandStart = "start"
-	supportText  = "Напишите свои идеи и предложения!\n" +
-		"Поделитесь с нами своими идеями. Мы учтём все пожелания или решим вашу проблему с которой вы столкнулись!"
 )
-
-var courseSignMap map[int]*Support
-
-func init() {
-	courseSignMap = make(map[int]*Support)
-}
 
 var numericKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
@@ -57,10 +47,9 @@ var cancelKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 func (b *Bot) HandleCommand(message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "")
-
 	switch message.Command() {
 	case commandStart:
-		msg.Text = "Привет, я ваш личный учётник.\nЯ помогу вам вести контроль ваших растрат."
+		msg.Text = b.message.Start
 		msg.ReplyMarkup = numericKeyboard
 		_, err := b.bot.Send(msg)
 		return err
@@ -72,24 +61,17 @@ func (b *Bot) HandleCommand(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) HandleMessage(message *tgbotapi.Message) {
-
 	msg := tgbotapi.NewMessage(message.Chat.ID, "")
 	switch message.Text {
 	case "Расходы":
-		msg.Text = "У вас пока нет записанных расходов"
+		msg.Text = b.message.Expenses
 		msg.ReplyMarkup = InlineKeyboard
 	case "Обратная связь 📲":
-		msg.Text = "Вы хотите обратиться в поддержку?"
+		msg.Text = b.message.Support
 		msg.ReplyMarkup = confirmKeyboard
 	case "FAQ":
-		data, err := ioutil.ReadFile("D:/Golang/bot/pkg/telegram/FAQ.txt")
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		msg.Text = string(data)
+		msg.Text = b.message.FAQ
 	}
-
 	_, err := b.bot.Send(msg)
 	if err != nil {
 		return
@@ -115,11 +97,8 @@ func (b *Bot) HandleCallbackDataMenu(callback *tgbotapi.CallbackQuery) {
 		}
 	case "Yes":
 		msg := tgbotapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, "")
-		msg.Text = supportText
-		_, err := b.bot.Send(msg)
-		if err != nil {
-			return
-		}
+		msg.Text = b.message.Idea
+		b.bot.Send(msg)
 	}
 }
 func (b *Bot) SendMessageToAdmin(message *tgbotapi.Message) {

@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
+	"log"
+	"tgbot/pkg/config"
+	"tgbot/pkg/telegram"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"os"
-	"tgbot/pkg/telegram"
 )
 
 func init() {
@@ -20,14 +20,19 @@ func init() {
 }
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
+	cfg, err := config.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bot, err := tgbotapi.NewBotAPI(cfg.TelegramToken)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	initDB()
 
-	telegramBot := telegram.NewBot(bot)
+	telegramBot := telegram.NewBot(bot,cfg.Message)
 	if err := telegramBot.Start(); err != nil {
 		log.Fatal(err)
 	}
